@@ -1,0 +1,24 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build APK with Buildozer
+        uses: ArtemKulyk/buildozer-action@v1
+        with:
+          command: buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Trading-Signal-V3-APK
+          path: bin/*.apk

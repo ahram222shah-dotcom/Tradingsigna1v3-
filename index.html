@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trading Signal V3</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#10131a;color:#fff;font-family:Arial,sans-serif}
+.app{max-width:520px;margin:auto;padding:18px}.card{background:#1a1f29;border-radius:18px;padding:18px;margin-bottom:12px;box-shadow:0 4px 18px #0005}
+h1{text-align:center;margin:5px 0 8px}.note{text-align:center;color:#bbb;font-size:13px}
+select,button{width:100%;padding:14px;border:0;border-radius:12px;font-size:16px;margin-top:10px}
+button{background:#2f7cff;color:white;font-weight:bold}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#11151d;border-radius:12px;padding:14px;text-align:center}.value{font-size:19px;font-weight:bold}
+.signal{text-align:center;font-size:30px;font-weight:bold;padding:22px}.wait{color:#ffd166}.call{color:#35d07f}.put{color:#ff5c68}
+.small{text-align:center;color:#aaa;font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="card">
+<h1>Trading Signal V3</h1>
+<div class="note">ہر 10 سیکنڈ بعد تجزیاتی سگنل</div>
+</div>
+<div class="card">
+<select id="symbol"><option>BTC-USD</option><option>ETH-USD</option><option>EURUSD</option><option>GBPUSD</option></select>
+<div class="stats">
+<div class="stat">Price<div id="price" class="value">--</div></div>
+<div class="stat">RSI<div id="rsi" class="value">--</div></div>
+<div class="stat">EMA 9<div id="ema9" class="value">--</div></div>
+<div class="stat">EMA 21<div id="ema21" class="value">--</div></div>
+</div>
+<div id="signal" class="signal wait">WAIT</div>
+<div id="reason" class="small">سگنل کا انتظار ہے...</div>
+<button onclick="refresh()">ابھی سگنل چیک کریں</button>
+<div id="status" class="small">Ready</div>
+</div>
+<div class="card small">یہ demo signal engine ہے۔ حقیقی مارکیٹ ڈیٹا/API شامل کیے بغیر اسے حقیقی trade کے لیے استعمال نہ کریں۔</div>
+</div>
+<script>
+let prices=[];
+function ema(a,p){let k=2/(p+1),e=a[0];for(let i=1;i<a.length;i++)e=a[i]*k+e*(1-k);return e}
+function rsi(a,p=14){if(a.length<=p)return 50;let g=0,l=0;for(let i=a.length-p;i<a.length;i++){let d=a[i]-a[i-1];if(d>0)g+=d;else l-=d}if(l===0)return 100;let rs=(g/p)/(l/p);return 100-100/(1+rs)}
+function speak(t){if("speechSynthesis"in window)speechSynthesis.speak(new SpeechSynthesisUtterance(t))}
+function refresh(){
+ let last=prices.length?prices.at(-1):85200;
+ let price=last+(Math.random()-.5)*90; prices.push(price);if(prices.length>60)prices.shift();
+ while(prices.length<22)prices.unshift(price);
+ let R=rsi(prices),E9=ema(prices,9),E21=ema(prices,21);
+ let sig="WAIT",reason="واضح setup نہیں، انتظار کریں";
+ if(R<35&&E9>E21){sig="CALL / YES";reason="RSI کم اور EMA9 اوپر ہے";} 
+ else if(R>65&&E9<E21){sig="PUT / NO";reason="RSI زیادہ اور EMA9 نیچے ہے";}
+ document.querySelector("#price").textContent=price.toFixed(2);
+ document.querySelector("#rsi").textContent=R.toFixed(2);
+ document.querySelector("#ema9").textContent=E9.toFixed(2);
+ document.querySelector("#ema21").textContent=E21.toFixed(2);
+ let s=document.querySelector("#signal");s.textContent=sig;s.className="signal "+(sig.startsWith("CALL")?"call":sig.startsWith("PUT")?"put":"wait");
+ document.querySelector("#reason").textContent=reason;
+ document.querySelector("#status").textContent="Last update: "+new Date().toLocaleTimeString();
+ speak(sig);
+}
+refresh();setInterval(refresh,10000);
+</script>
+</body>
+</html>
