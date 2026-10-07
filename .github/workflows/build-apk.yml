@@ -1,55 +1,86 @@
 name: Build APK
 
 on:
-push:
-branches:
-- main
-workflow_dispatch:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-build:
-runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-22.04
 
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  - name: Set up Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: "3.11"
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-  - name: Install dependencies
-    run: |
-      python -m pip install --upgrade pip
-      pip install buildozer cython
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
 
-  - name: Install system dependencies
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y \
-        git \
-        zip \
-        unzip \
-        openjdk-17-jdk \
-        autoconf \
-        automake \
-        libtool \
-        pkg-config \
-        zlib1g-dev \
-        libncurses5-dev \
-        libncursesw5-dev \
-        libtinfo5 \
-        cmake \
-        libffi-dev \
-        libssl-dev
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            openjdk-17-jdk \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            cmake \
+            libffi-dev \
+            libssl-dev
 
-  - name: Build APK
-    run: |
-      buildozer android debug
+      - name: Check Java
+        run: |
+          java -version
+          javac -version
 
-  - name: Upload APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: trading-signal-apk
-      path: bin/*.apk
+      - name: Install Python build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "setuptools<70"
+          python -m pip install "cython==0.29.37"
+          python -m pip install "buildozer==1.5.0"
+          python -m pip install virtualenv
+
+      - name: Check Buildozer
+        run: |
+          buildozer --version
+
+      - name: Check project files
+        run: |
+          echo "Project files:"
+          ls -la
+          echo ""
+          echo "Buildozer spec:"
+          test -f buildozer.spec
+          cat buildozer.spec
+
+      - name: Build APK
+        env:
+          P4A_RELEASE_KEYSTORE: ""
+        run: |
+          buildozer -v android debug
+
+      - name: Show APK
+        run: |
+          echo "APK files:"
+          ls -lah bin/
+          find bin -name "*.apk" -type f -print
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-signal-v3-apk
+          path: bin/*.apk
+          if-no-files-found: error
