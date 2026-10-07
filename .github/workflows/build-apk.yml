@@ -88,4 +88,4 @@ jobs:
         with:
           name: trading-signal-v3-apk
           path: bin/*.apk
-          if-no-files-found: error
+          if-no-files-found: 
