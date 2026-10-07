@@ -19,15 +19,30 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-35"
+          sdkmanager "build-tools;35.0.0"
+          sdkmanager "cmdline-tools;latest"
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
-
           sudo apt-get install -y \
             git \
             zip \
             unzip \
-            openjdk-17-jdk \
             autoconf \
             automake \
             libtool \
@@ -35,15 +50,9 @@ jobs:
             zlib1g-dev \
             libncurses5-dev \
             libncursesw5-dev \
-            libtinfo5 \
             cmake \
             libffi-dev \
             libssl-dev
-
-      - name: Check Java
-        run: |
-          java -version
-          javac -version
 
       - name: Install Python build tools
         run: |
@@ -53,18 +62,14 @@ jobs:
           python -m pip install "buildozer==1.5.0"
           python -m pip install virtualenv
 
-      - name: Check Buildozer
+      - name: Check environment
         run: |
+          java -version
+          javac -version
+          python --version
           buildozer --version
-
-      - name: Check project files
-        run: |
-          echo "Project files:"
+          adb version
           ls -la
-          echo ""
-          echo "Buildozer spec:"
-          test -f buildozer.spec
-          cat buildozer.spec
 
       - name: Build APK
         env:
@@ -75,8 +80,8 @@ jobs:
       - name: Show APK
         run: |
           echo "APK files:"
-          ls -lah bin/
           find bin -name "*.apk" -type f -print
+          ls -lah bin/
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
